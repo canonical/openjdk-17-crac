@@ -707,6 +707,8 @@
   template(toFileURL_name,                                  "toFileURL")                                          \
   template(toFileURL_signature,                             "(Ljava/lang/String;)Ljava/net/URL;")                 \
   template(url_void_signature,                              "(Ljava/net/URL;)V")                                  \
+  template(jdk_crac_Core,                                   "jdk/crac/Core")                                      \
+  template(checkpointRestoreInternal_name,                  "checkpointRestoreInternal")                          \
                                                                                                                   \
   /*end*/
 

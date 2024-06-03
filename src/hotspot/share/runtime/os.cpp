@@ -1776,6 +1776,13 @@ void os::print_memory_mappings(outputStream* st) {
   os::print_memory_mappings(nullptr, (size_t)-1, st);
 }
 
+void os::cleanup_memory(char* addr, size_t bytes) {
+  char* start = (char*)align_up(addr, os::vm_page_size());
+  char* end = (char*)align_down(addr + bytes, os::vm_page_size());
+  os::uncommit_memory(start, end - start);
+  os::commit_memory(start, end - start, false);
+}
+
 void os::pretouch_memory(void* start, void* end, size_t page_size) {
   for (volatile char *p = (char*)start; p < (char*)end; p += page_size) {
     // Note: this must be a store, not a load. On many OSes loads from fresh

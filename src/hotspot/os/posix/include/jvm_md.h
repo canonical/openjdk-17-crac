@@ -91,4 +91,8 @@
 #define SHUTDOWN2_SIGNAL SIGINT
 #define SHUTDOWN3_SIGNAL SIGTERM
 
+#ifdef LINUX
+#define RESTORE_SIGNAL   (SIGRTMIN + 2)
+#endif
+
 #endif /* !_JAVASOFT_JVM_MD_H_ */

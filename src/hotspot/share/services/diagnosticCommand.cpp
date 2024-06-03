@@ -129,6 +129,7 @@ void DCmdRegistrant::register_dcmds(){
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CompilerDirectivesAddDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CompilerDirectivesRemoveDCmd>(full_export, true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CompilerDirectivesClearDCmd>(full_export, true, false));
+  DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<CheckpointDCmd>(full_export, true,false));
 
   // Enhanced JMX Agent Support
   // These commands won't be exported via the DiagnosticCommandMBean until an
@@ -1041,3 +1042,12 @@ void DebugOnCmdStartDCmd::execute(DCmdSource source, TRAPS) {
   }
 }
 #endif // INCLUDE_JVMTI
+
+void CheckpointDCmd::execute(DCmdSource source, TRAPS) {
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_crac_Core(),
+                                                 true, CHECK);
+  JavaValue result(T_VOID);
+  JavaCalls::call_static(&result, k,
+                         vmSymbols::checkpointRestoreInternal_name(),
+                         vmSymbols::void_method_signature(), CHECK);
+}

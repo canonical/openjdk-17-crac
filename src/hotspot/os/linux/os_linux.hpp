@@ -168,6 +168,13 @@ class Linux {
 
   static jlong fast_thread_cpu_time(clockid_t clockid);
 
+  static void vm_create_start();
+  static bool prepare_checkpoint();
+  static Handle checkpoint(TRAPS);
+  static void restore();
+  static void register_persistent_fd(int fd, int st_dev, int st_ino);
+  static void deregister_persistent_fd(int fd, int st_dev, int st_ino);
+
   // Determine if the vmid is the parent pid for a child in a PID namespace.
   // Return the namespace pid if so, otherwise -1.
   static int get_namespace_pid(int vmid);

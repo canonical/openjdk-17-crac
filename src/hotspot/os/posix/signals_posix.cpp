@@ -139,7 +139,7 @@ public:
 
 
 debug_only(static bool signal_sets_initialized = false);
-static sigset_t unblocked_sigs, vm_sigs, preinstalled_sigs;
+static sigset_t unblocked_sigs, vm_sigs, blocked_sigs, preinstalled_sigs;
 
 // Our own signal handlers should never ever get replaced by a third party one.
 //  To check that, and to aid with diagnostics, store a copy of the handler setup
@@ -1483,6 +1483,10 @@ static void signal_sets_init() {
   if (!ReduceSignalUsage) {
     sigaddset(&vm_sigs, BREAK_SIGNAL);
   }
+
+  sigemptyset(&blocked_sigs);
+  sigaddset(&blocked_sigs, RESTORE_SIGNAL);
+
   debug_only(signal_sets_initialized = true);
 }
 
@@ -1510,6 +1514,7 @@ void PosixSignals::hotspot_sigmask(Thread* thread) {
   osthread->set_caller_sigmask(caller_sigmask);
 
   pthread_sigmask(SIG_UNBLOCK, unblocked_signals(), NULL);
+  pthread_sigmask(SIG_BLOCK, &blocked_sigs, NULL);
 
   if (!ReduceSignalUsage) {
     if (thread->is_VM_thread()) {

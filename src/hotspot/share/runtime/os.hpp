@@ -366,6 +366,8 @@ class os: AllStatic {
   static bool   uncommit_memory(char* addr, size_t bytes, bool executable = false);
   static bool   release_memory(char* addr, size_t bytes);
 
+  static void   cleanup_memory(char* addr, size_t bytes);
+
   // Does the platform support trimming the native heap?
   static bool can_trim_native_heap();
 

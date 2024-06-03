@@ -2081,6 +2081,31 @@ const intx ObjectAlignmentInBytes = 8;
   JFR_ONLY(product(ccstr, FlightRecorderOptions, NULL,                      \
           "Flight Recorder options"))                                       \
                                                                             \
+  product(ccstr, CRaCCheckpointTo, NULL, "Path to checkpoint image")        \
+                                                                            \
+  product(ccstr, CRaCRestoreFrom, NULL, "Path to image for restore, "       \
+      "replaces the initializing VM on success")                            \
+                                                                            \
+  product(bool, CRaCIgnoreRestoreIfUnavailable, false, "Ignore "            \
+      "-XX:CRaCRestoreFrom and continue initialization if restore is "      \
+      "unavailable")                                                        \
+                                                                            \
+  product(bool, CRAllowToSkipCheckpoint, false,                          \
+      "Allow implementation to not call Checkpoint if helper not found")    \
+                                                                            \
+  product(bool, CRHeapDumpOnCheckpointException, false, "Dump heap on "  \
+      "CheckpointException thrown because of C/RaC precondition failed")    \
+                                                                            \
+  product(bool, CRPrintResourcesOnCheckpoint, false, "Print resources "  \
+      "to decide CheckpointException")                                      \
+                                                                            \
+  product(bool, CRTraceStartupTime, false, "Trace startup time")         \
+                                                                            \
+  product(bool, CRDoThrowCheckpointException, true, "Throw "           \
+      "CheckpointException if uncheckpointable resource handle found")      \
+                                                                            \
+  product(bool, CRTrace, true, "Minimal C/R tracing")                       \
+                                                                            \
   JFR_ONLY(product(ccstr, StartFlightRecording, NULL,                       \
           "Start flight recording with options"))                           \
                                                                             \

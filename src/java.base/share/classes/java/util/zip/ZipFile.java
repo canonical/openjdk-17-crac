@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
 import java.lang.ref.Cleaner.Cleanable;
@@ -63,6 +64,7 @@ import java.util.stream.StreamSupport;
 import jdk.internal.access.JavaUtilZipFileAccess;
 import jdk.internal.access.JavaUtilJarAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.crac.Core;
 import jdk.internal.misc.VM;
 import jdk.internal.perf.PerfCounter;
 import jdk.internal.ref.CleanerFactory;
@@ -806,6 +808,10 @@ public class ZipFile implements ZipConstants, Closeable {
                 throw new UncheckedIOException(ioe);
             }
         }
+
+        public Source getSource() {
+            return zsrc;
+        }
     }
 
     /**
@@ -1083,6 +1089,20 @@ public class ZipFile implements ZipConstants, Closeable {
         synchronized (this) {
             ensureOpen();
             return res.zsrc.metaVersions;
+        }
+    }
+
+    private synchronized void beforeCheckpoint() {
+        RandomAccessFile f = res.getSource().getFile();
+        synchronized (f) {
+            FileDescriptor fd = null;
+            try {
+                fd = f.getFD();
+            } catch (IOException e) {
+            }
+            if (fd != null) {
+                Core.registerPersistent(fd);
+            }
         }
     }
 
@@ -1947,6 +1967,10 @@ public class ZipFile implements ZipConstants, Closeable {
                  p += CENHDR + CENNAM(cen, p) + CENEXT(cen, p) + CENCOM(cen, p))
                 count++;
             return count;
+        }
+
+        public RandomAccessFile getFile() {
+            return zfile;
         }
     }
 }

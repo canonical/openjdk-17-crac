@@ -3153,6 +3153,19 @@ jint Arguments::finalize_vm_init_args(bool patch_mod_javabase) {
   UNSUPPORTED_OPTION(ShowRegistersOnAssert);
 #endif // CAN_SHOW_REGISTERS_ON_ASSERT
 
+  if (CRaCRestoreFrom) {
+    os::Linux::restore();
+    if (!CRaCIgnoreRestoreIfUnavailable) {
+      // FIXME switch to unified hotspot logging
+      warning("cannot restore");
+      return JNI_ERR;
+    }
+  }
+
+  if (CRaCCheckpointTo && !os::Linux::prepare_checkpoint()) {
+    return JNI_ERR;
+  }
+
   return JNI_OK;
 }
 

@@ -110,6 +110,8 @@ class CollectedHeap : public CHeapObj<mtGC> {
 
   bool _is_gc_active;
 
+  bool _cleanup_unused;
+
   // Used for filler objects (static, but initialized in ctor).
   static size_t _filler_array_max_size;
 
@@ -371,6 +373,9 @@ class CollectedHeap : public CHeapObj<mtGC> {
   // that it should answer "false" for the concurrent part of a concurrent
   // collector -- dld).
   bool is_gc_active() const { return _is_gc_active; }
+
+  void set_cleanup_unused(bool value) { _cleanup_unused = value; }
+  bool do_cleanup_unused() const { return _cleanup_unused; }
 
   // Total number of GC collections (started)
   unsigned int total_collections() const { return _total_collections; }
