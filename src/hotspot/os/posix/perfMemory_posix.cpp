@@ -1431,6 +1431,8 @@ bool PerfMemoryLinux::checkpoint(const char* checkpoint_path) {
     return false;
   }
 
+  remove_file(backing_store_file_name);
+
   return true;
 }
 

@@ -53,8 +53,8 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
         }
 
         @Override
-        public int getPriority() {
-            return 0;
+        public Priority getPriority() {
+            return Priority.NORMAL;
         }
     }
 

@@ -214,10 +214,9 @@ public final class DefaultImageBuilder implements ImageBuilder {
                         String fileName = path.getFileName().toString();
                         return fileName.equals("jspawnhelper")
                             || fileName.equals("jexec")
-                            || fileName.equals("action-script")
-                            || fileName.equals("wait")
-                            || fileName.equals("criu")
-                            || fileName.equals("javatime");
+                            || fileName.equals("pauseengine")
+                            || fileName.equals("criuengine")
+                            || fileName.equals("simengine");
 
                     }).forEach(this::setExecutable);
                 }
