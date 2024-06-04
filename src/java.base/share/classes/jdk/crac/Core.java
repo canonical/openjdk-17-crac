@@ -48,15 +48,18 @@ public class Core {
 
     private static native Object[] checkpointRestore0();
 
-    private static boolean traceStartupTime;
     private static final Object checkpointRestoreLock = new Object();
     private static boolean checkpointInProgress = false;
+
+    private static class FlagsHolder {
+        public static final boolean TRACE_STARTUP_TIME =
+            GetBooleanAction.privilegedGetProperty("jdk.crac.trace-startup-time");
+    }
+
     private static final Context<Resource> globalContext = new OrderedContext();
     static {
         // force JDK context initialization
         jdk.internal.crac.Core.getJDKContext();
-
-        traceStartupTime = GetBooleanAction.privilegedGetProperty("jdk.crac.trace-startup-time");
     }
 
     /** This class is not instantiable. */
@@ -124,7 +127,7 @@ public class Core {
         final int[] codes = (int[])bundle[1];
         final String[] messages = (String[])bundle[2];
 
-        if (traceStartupTime) {
+        if (FlagsHolder.TRACE_STARTUP_TIME) {
             System.out.println("STARTUPTIME " + System.nanoTime() + " restore");
         }
 
@@ -182,7 +185,7 @@ public class Core {
                     checkpointInProgress = true;
                     checkpointRestore1();
                 } finally {
-                    if (traceStartupTime) {
+                    if (FlagsHolder.TRACE_STARTUP_TIME) {
                         System.out.println("STARTUPTIME " + System.nanoTime() + " restore-finish");
                     }
                     checkpointInProgress = false;
