@@ -2093,18 +2093,24 @@ const intx ObjectAlignmentInBytes = 8;
       "-XX:CRaCRestoreFrom and continue initialization if restore is "      \
       "unavailable")                                                        \
                                                                             \
-  product(bool, CRAllowToSkipCheckpoint, false,                          \
+  product(ccstr, CRaCIgnoredFileDescriptors, NULL, "Comma-separated list "  \
+      "of file descriptor numbers or paths. All file descriptors greater "  \
+      "than 2 (stdin, stdout and stderr are excluded automatically) not "   \
+      "in this list are closed when the VM is started.")                    \
+                                                                            \
+                                                                            \
+  product(bool, CRAllowToSkipCheckpoint, false,                             \
       "Allow implementation to not call Checkpoint if helper not found")    \
                                                                             \
-  product(bool, CRHeapDumpOnCheckpointException, false, "Dump heap on "  \
+  product(bool, CRHeapDumpOnCheckpointException, false, "Dump heap on "     \
       "CheckpointException thrown because of C/RaC precondition failed")    \
                                                                             \
-  product(bool, CRPrintResourcesOnCheckpoint, false, "Print resources "  \
+  product(bool, CRPrintResourcesOnCheckpoint, false, "Print resources "     \
       "to decide CheckpointException")                                      \
                                                                             \
-  product(bool, CRTraceStartupTime, false, "Trace startup time")         \
+  product(bool, CRTraceStartupTime, false, "Trace startup time")            \
                                                                             \
-  product(bool, CRDoThrowCheckpointException, true, "Throw "           \
+  product(bool, CRDoThrowCheckpointException, true, "Throw "                \
       "CheckpointException if uncheckpointable resource handle found")      \
                                                                             \
   product(bool, CRTrace, true, "Minimal C/R tracing")                       \
@@ -2126,8 +2132,8 @@ const intx ObjectAlignmentInBytes = 8;
              "Mark all threads after a safepoint, and clear on a modify "   \
              "fence. Add cleanliness checks.")                              \
                                                                             \
-  develop(bool, TraceOptimizedUpcallStubs, false,                              \
-                "Trace optimized upcall stub generation")                      \
+  develop(bool, TraceOptimizedUpcallStubs, false,                           \
+                "Trace optimized upcall stub generation")                   \
                                                                             \
   product(uint, TrimNativeHeapInterval, 0,                                  \
           "Interval, in ms, at which the JVM will trim the native heap if " \
