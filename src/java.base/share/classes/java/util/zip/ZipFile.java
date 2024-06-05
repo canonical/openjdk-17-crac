@@ -809,8 +809,12 @@ public class ZipFile implements ZipConstants, Closeable {
             }
         }
 
-        public Source getSource() {
-            return zsrc;
+        public void beforeCheckpoint() {
+            if (zsrc != null) {
+                synchronized (zsrc) {
+                    zsrc.beforeCheckpoint();
+                }
+            }
         }
     }
 
@@ -1093,17 +1097,7 @@ public class ZipFile implements ZipConstants, Closeable {
     }
 
     private synchronized void beforeCheckpoint() {
-        RandomAccessFile f = res.getSource().getFile();
-        synchronized (f) {
-            FileDescriptor fd = null;
-            try {
-                fd = f.getFD();
-            } catch (IOException e) {
-            }
-            if (fd != null) {
-                Core.registerPersistent(fd);
-            }
-        }
+        res.beforeCheckpoint();
     }
 
     private static boolean isWindows;
@@ -1969,8 +1963,17 @@ public class ZipFile implements ZipConstants, Closeable {
             return count;
         }
 
-        public RandomAccessFile getFile() {
-            return zfile;
+        public void beforeCheckpoint() {
+            synchronized (zfile) {
+                FileDescriptor fd = null;
+                try {
+                    fd = zfile.getFD();
+                } catch (IOException e) {
+                }
+                if (fd != null) {
+                    Core.registerPersistent(fd);
+                }
+            }
         }
     }
 }
