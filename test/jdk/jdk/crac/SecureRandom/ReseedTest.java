@@ -20,15 +20,44 @@
 
 
 import jdk.crac.*;
+import jdk.test.lib.crac.CracBuilder;
+import jdk.test.lib.crac.CracTest;
+import jdk.test.lib.crac.CracTestArg;
+
 import java.security.SecureRandom;
+import static jdk.test.lib.Asserts.assertEquals;
+import static jdk.test.lib.Asserts.assertNotEquals;
 
-public class Test1 {
+/*
+ * @test
+ * @summary Verify that SHA1PRNG secure random is reseeded after restore if initialized with default seed.
+ * @library /test/lib
+ * @build ReseedTest
+ * @run driver/timeout=60 jdk.test.lib.crac.CracTest true
+ * @run driver/timeout=60 jdk.test.lib.crac.CracTest false
+ */
 
-    private static SecureRandom sr;
+public class ReseedTest implements CracTest {
+    @CracTestArg
+    boolean reseed;
 
-    public static void main(String args[]) throws Exception {
+    @Override
+    public void test() throws Exception {
+        CracBuilder builder = new CracBuilder();
+        builder.doCheckpoint();
+        int e1 = builder.startRestore().waitFor();
+        int e2 = builder.startRestore().waitFor();
+        if (reseed) {
+            assertEquals(e1, e2);
+        } else {
+            assertNotEquals(e1, e2);
+        }
+    }
+
+    @Override
+    public void exec() throws Exception {
         SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
-        if ("1".equalsIgnoreCase(args[0])) {
+        if (reseed) {
             sr.setSeed(sr.generateSeed(10));
         }
         sr.nextInt();
