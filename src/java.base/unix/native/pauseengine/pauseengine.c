@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -75,7 +76,9 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         fclose(pidfile);
-        if (kickjvm(jvm, 0)) {
+
+        char *strid = getenv("CRAC_NEW_ARGS_ID");
+        if (kickjvm(jvm, strid ? atoi(strid) : 0)) {
             return 1;
         }
     } else {
