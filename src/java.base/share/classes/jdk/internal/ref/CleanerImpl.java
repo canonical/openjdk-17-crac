@@ -25,6 +25,7 @@
 
 package jdk.internal.ref;
 
+import jdk.crac.CheckpointException;
 import java.lang.ref.Cleaner;
 import java.lang.ref.Cleaner.Cleanable;
 import java.lang.ref.ReferenceQueue;
@@ -43,7 +44,7 @@ import jdk.internal.misc.InnocuousThread;
  * CleanerImpl manages a set of object references and corresponding cleaning actions.
  * CleanerImpl provides the functionality of {@link java.lang.ref.Cleaner}.
  */
-public final class CleanerImpl implements Runnable, JDKResource {
+public final class CleanerImpl implements Runnable {
 
     /**
      * An object to access the CleanerImpl from a Cleaner; set by Cleaner init.
@@ -86,7 +87,6 @@ public final class CleanerImpl implements Runnable, JDKResource {
     public CleanerImpl() {
         queue = new ReferenceQueue<>();
         phantomCleanableList = new PhantomCleanableRef();
-        jdk.internal.crac.Core.getJDKContext().register(this);
     }
 
     /**
@@ -152,24 +152,10 @@ public final class CleanerImpl implements Runnable, JDKResource {
         }
     }
 
-    @Override
-    public Priority getPriority() {
-        return Priority.CLEANERS;
-    }
-
-    @Override
-    public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
-        queue.waitForWaiters(1);
-    }
-
-    @Override
-    public void afterRestore(Context<? extends Resource> context) throws Exception {
-    }
-
     /**
      * Perform cleaning on an unreachable PhantomReference.
      */
-    public static final class PhantomCleanableRef extends PhantomCleanable<Object> {
+    public static final class PhantomCleanableRef extends PhantomCleanable<Object> implements JDKResource {
         private final Runnable action;
 
         /**
@@ -181,6 +167,7 @@ public final class CleanerImpl implements Runnable, JDKResource {
         public PhantomCleanableRef(Object obj, Cleaner cleaner, Runnable action) {
             super(obj, cleaner);
             this.action = action;
+            jdk.internal.crac.Core.getJDKContext().register(this);
         }
 
         /**
@@ -214,6 +201,24 @@ public final class CleanerImpl implements Runnable, JDKResource {
         @Override
         public void clear() {
             throw new UnsupportedOperationException("clear");
+        }
+
+
+        @Override
+        public Priority getPriority() {
+            return Priority.CLEANERS;
+        }
+
+        @Override
+        public void beforeCheckpoint(Context<? extends Resource> context) throws Exception {
+            if (refersTo(null)) {
+                 clean();
+            }
+        }
+
+        @Override
+        public void afterRestore(Context<? extends Resource> context) throws Exception {
+
         }
     }
 
