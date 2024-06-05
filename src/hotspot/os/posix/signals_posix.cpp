@@ -1497,6 +1497,11 @@ static sigset_t* unblocked_signals() {
   return &unblocked_sigs;
 }
 
+static sigset_t* blocked_signals() {
+  assert(signal_sets_initialized, "Not initialized");
+  return &blocked_sigs;
+}
+
 // These are the signals that are blocked while a (non-VM) thread is
 // running Java. Only the VM thread handles these signals.
 static sigset_t* vm_signals() {
@@ -1514,7 +1519,7 @@ void PosixSignals::hotspot_sigmask(Thread* thread) {
   osthread->set_caller_sigmask(caller_sigmask);
 
   pthread_sigmask(SIG_UNBLOCK, unblocked_signals(), NULL);
-  pthread_sigmask(SIG_BLOCK, &blocked_sigs, NULL);
+  pthread_sigmask(SIG_BLOCK, blocked_signals(), NULL);
 
   if (!ReduceSignalUsage) {
     if (thread->is_VM_thread()) {
