@@ -191,6 +191,7 @@ public class Core {
                                 }
                             });
                 }
+            });
         }
 
         RestoreException restoreException = null;
