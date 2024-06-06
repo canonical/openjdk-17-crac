@@ -48,11 +48,6 @@ class FileDispatcherImpl extends FileDispatcher {
                 throws IOException {
             FileDispatcherImpl.afterRestore();
         }
-
-        @Override
-        public Priority getPriority() {
-            return Priority.NORMAL;
-        }
     }
 
     static Object closeLock = new Object();
@@ -64,7 +59,7 @@ class FileDispatcherImpl extends FileDispatcher {
     static {
         IOUtil.load();
         init();
-        Core.getJDKContext().register(resourceProxy);
+        Core.Priority.NORMAL.getContext().register(resourceProxy);
     }
 
     private static final JavaIOFileDescriptorAccess fdAccess =

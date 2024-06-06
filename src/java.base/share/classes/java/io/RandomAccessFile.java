@@ -90,7 +90,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
         private static final JavaIOFileDescriptorAccess fdAccess = SharedSecrets.getJavaIOFileDescriptorAccess();
 
         Resource() {
-            Core.getJDKContext().register(this);
+            Core.Priority.PRE_FILE_DESRIPTORS.getContext().register(this);
         }
 
         @Override
@@ -112,11 +112,6 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
         @Override
         public void afterRestore(Context<? extends jdk.crac.Resource> context) throws Exception {
 
-        }
-
-        @Override
-        public Priority getPriority() {
-            return Priority.PRE_FILE_DESRIPTORS;
         }
     }
 

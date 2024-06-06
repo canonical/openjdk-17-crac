@@ -51,11 +51,6 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
         public void afterRestore(Context<? extends Resource> context) throws Exception {
             PlainSocketImpl.afterRestore();
         }
-
-        @Override
-        public Priority getPriority() {
-            return Priority.NORMAL;
-        }
     }
 
     static Object closeLock = new Object();
@@ -66,7 +61,7 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
 
     static {
         initProto();
-        Core.getJDKContext().register(resourceProxy);
+        Core.Priority.NORMAL.getContext().register(resourceProxy);
     }
 
     /**

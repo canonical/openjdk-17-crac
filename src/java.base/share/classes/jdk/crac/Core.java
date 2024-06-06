@@ -28,9 +28,11 @@ package jdk.crac;
 
 import jdk.crac.impl.*;
 import jdk.internal.crac.JDKContext;
+import jdk.internal.crac.JDKResource;
 import jdk.internal.crac.LoggerContainer;
 import java.security.AccessController;
 import sun.security.action.GetBooleanAction;
+import sun.security.action.GetPropertyAction;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -71,11 +73,7 @@ public class Core {
             GetBooleanAction.privilegedGetProperty("jdk.crac.trace-startup-time");
     }
 
-    private static final Context<Resource> globalContext = new OrderedContext<>("GlobalContext");
-    static {
-        // force JDK context initialization
-        jdk.internal.crac.Core.getJDKContext();
-    }
+    private static final Context<Resource> globalContext = new BlockingOrderedContext<>();
 
     /** This class is not instantiable. */
     private Core() {
@@ -123,6 +121,7 @@ public class Core {
         // This log is here to initialize call sites in logger formatters.
         LoggerContainer.debug("Starting checkpoint at epoch:{0}", System.currentTimeMillis());
         try {
+            jdk.internal.crac.Core.getJDKContext().beforeCheckpoint(null);
             globalContext.beforeCheckpoint(null);
         } catch (CheckpointException ce) {
             checkpointException = new CheckpointException();
@@ -197,6 +196,7 @@ public class Core {
         RestoreException restoreException = null;
         try {
             globalContext.afterRestore(null);
+            jdk.internal.crac.Core.getJDKContext().afterRestore(null);
         } catch (RestoreException re) {
             if (checkpointException == null) {
                 restoreException = re;
