@@ -168,7 +168,9 @@ public final class CleanerImpl implements Runnable {
             super(obj, cleaner);
             this.action = action;
             this.priority = priority;
-            jdk.internal.crac.Core.getJDKContext().register(this);
+            if (priority != null) {
+                jdk.internal.crac.Core.getJDKContext().register(this);
+            }
         }
 
         /**
