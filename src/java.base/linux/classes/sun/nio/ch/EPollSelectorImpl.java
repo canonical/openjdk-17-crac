@@ -27,9 +27,12 @@ package sun.nio.ch;
 
 import jdk.crac.Context;
 import jdk.crac.Resource;
+import jdk.internal.access.JavaIOFileDescriptorAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.crac.JDKResource;
 import jdk.internal.crac.JDKResource.Priority;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.IllegalSelectorException;
@@ -58,7 +61,10 @@ class EPollSelectorImpl extends SelectorImpl implements JDKResource {
     // maximum number of events to poll in one call to epoll_wait
     private static final int NUM_EPOLLEVENTS = Math.min(IOUtil.fdLimit(), 1024);
 
-       private enum CheckpointRestoreState {
+    private static final JavaIOFileDescriptorAccess fdAccess
+            = SharedSecrets.getJavaIOFileDescriptorAccess();
+
+    private enum CheckpointRestoreState {
         NORMAL_OPERATION,
         CHECKPOINT_TRANSITION,
         CHECKPOINTED,
@@ -108,7 +114,10 @@ class EPollSelectorImpl extends SelectorImpl implements JDKResource {
         this.epfd = EPoll.create();
         try {
             this.eventfd = new EventFD();
-            IOUtil.configureBlocking(IOUtil.newFD(eventfd.efd()), false);
+            FileDescriptor fd = IOUtil.newFD(eventfd.efd());
+            // This FileDescriptor is a one-time use, the actual FD will be closed from EventFD
+            fdAccess.markClosed(fd);
+            IOUtil.configureBlocking(fd, false);
         } catch (IOException ioe) {
             EPoll.freePollArray(pollArrayAddress);
             FileDispatcherImpl.closeIntFD(epfd);
