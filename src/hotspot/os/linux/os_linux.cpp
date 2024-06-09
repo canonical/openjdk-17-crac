@@ -269,7 +269,7 @@ class CracRestoreParameters : public CHeapObj<mtInternal> {
 
   struct header {
     jlong _restore_time;
-    jlong _restore_counter;
+    jlong _restore_nanos;
     int _nflags;
     int _nprops;
     int _env_memory_size;
@@ -328,10 +328,10 @@ class CracRestoreParameters : public CHeapObj<mtInternal> {
       const SystemProperty* props,
       const char *args,
       jlong restore_time,
-      jlong restore_counter) {
+      jlong restore_nanos) {
     header hdr = {
       restore_time,
-      restore_counter,
+      restore_nanos,
       num_flags,
       system_props_length(props),
       env_vars_size(environ)
@@ -443,7 +443,7 @@ static char* _crengine_arg_str = NULL;
 static unsigned int _crengine_argc = 0;
 static const char* _crengine_args[32];
 static jlong _restore_start_time;
-static jlong _restore_start_counter;
+static jlong _restore_start_nanos;
 static FdsInfo _vm_inited_fds(false);
 
 // If the VM might have been created on the primordial thread, we need to resolve the
@@ -5777,10 +5777,10 @@ jlong os::Linux::restore_start_time() {
 }
 
 jlong os::Linux::uptime_since_restore() {
-  if (!_restore_start_counter) {
+  if (!_restore_start_nanos) {
     return -1;
   }
-  return javaTimeNanos() - _restore_start_counter;
+  return javaTimeNanos() - _restore_start_nanos;
 }
 
 void VM_Crac::trace_cr(const char* msg, ...) {
@@ -6071,6 +6071,7 @@ public:
 };
 
 static int checkpoint_restore(int *shmid) {
+  os::record_time_before_checkpoint();
 
   int cres = call_crengine();
   if (cres < 0) {
@@ -6087,6 +6088,8 @@ static int checkpoint_restore(int *shmid) {
     sig = sigwaitinfo(&waitmask, &info);
   } while (sig == -1 && errno == EINTR);
   assert(sig == RESTORE_SIGNAL, "got what requested");
+
+  os::update_javaTimeNanos_offset();
 
   if (CRTraceStartupTime) {
     tty->print_cr("STARTUPTIME " JLONG_FORMAT " restore-native", os::javaTimeNanos());
@@ -6256,7 +6259,9 @@ void VM_Crac::doit() {
 
   if (shmid <= 0 || !VM_Crac::read_shm(shmid)) {
     _restore_start_time = os::javaTimeMillis();
-    _restore_start_counter = os::javaTimeNanos();
+    _restore_start_nanos = os::javaTimeNanos();
+  } else {
+    _restore_start_nanos += os::monotonic_time_offset();
   }
   PerfMemoryLinux::restore();
 
@@ -6360,7 +6365,7 @@ void os::Linux::restore() {
   struct stat st;
 
   jlong restore_time = javaTimeMillis();
-  jlong restore_counter = javaTimeNanos();
+  jlong restore_nanos = javaTimeNanos();
 
   compute_crengine();
 
@@ -6374,7 +6379,7 @@ void os::Linux::restore() {
           Arguments::system_properties(),
           Arguments::java_command() ? Arguments::java_command() : "",
           restore_time,
-          restore_counter)) {
+          restore_nanos)) {
       char strid[32];
       snprintf(strid, sizeof(strid), "%d", id);
       setenv("CRAC_NEW_ARGS_ID", strid, true);
@@ -6479,7 +6484,7 @@ bool CracRestoreParameters::read_from(int fd) {
   char* cursor = _raw_content + sizeof(header);
 
   ::_restore_start_time = hdr->_restore_time;
-  ::_restore_start_counter = hdr->_restore_counter;
+  ::_restore_start_nanos = hdr->_restore_nanos;
 
   for (int i = 0; i < hdr->_nflags; i++) {
     FormatBuffer<80> err_msg("%s", "");
@@ -6557,6 +6562,45 @@ void os::print_memory_mappings(char* addr, size_t bytes, outputStream* st) {
     }
     st->cr();
   }
+}
+
+
+static bool read_all(int fd, char *dest, size_t n) {
+  size_t rd = 0;
+  do {
+    ssize_t r = ::read(fd, dest + rd, n - rd);
+    if (r == 0) {
+      return false;
+    } else if (r < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+      return false;
+    }
+    rd += r;
+  } while (rd < n);
+  return true;
+}
+
+bool os::read_bootid(char *dest) {
+  int fd = ::open("/proc/sys/kernel/random/boot_id", O_RDONLY);
+  if (fd < 0 || !read_all(fd, dest, UUID_LENGTH)) {
+    perror("CRaC: Cannot read system boot ID");
+    return false;
+  }
+  char c;
+  if (!read_all(fd, &c, 1) || c != '\n') {
+    perror("CRaC: system boot ID does not end with newline");
+    return false;
+  }
+  if (::read(fd, &c, 1) != 0) {
+    perror("CRaC: Unexpected data/error reading system boot ID");
+    return false;
+  }
+  if (::close(fd) != 0) {
+    perror("CRaC: Cannot close system boot ID file");
+  }
+  return true;
 }
 
 bool os::trim_native_heap(os::size_change_t* rss_change) {
