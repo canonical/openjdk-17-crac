@@ -287,7 +287,7 @@ private:
                                 uint gc_counter,
                                 uint old_marking_started_before);
 
-  virtual void finish_collection() {
+  virtual void finish_collection() override {
     G1UncommitRegionTask::finish_collection();
   }
 
