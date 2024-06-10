@@ -2126,6 +2126,9 @@ const intx ObjectAlignmentInBytes = 8;
                                                                             \
   product(bool, CRTrace, true, RESTORE_SETTABLE, "Minimal C/R tracing")     \
                                                                             \
+  product(bool, CRPauseOnCheckpointError, false, DIAGNOSTIC,                \
+      "Pauses the checkpoint when a problem is found on VM level.")         \
+                                                                            \
   JFR_ONLY(product(ccstr, StartFlightRecording, NULL,                       \
           "Start flight recording with options"))                           \
                                                                             \
