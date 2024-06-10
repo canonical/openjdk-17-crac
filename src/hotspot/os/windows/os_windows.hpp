@@ -59,6 +59,7 @@ class win32 {
 
  public:
   // Windows-specific interface:
+  static void   initialize_performance_counter();
   static void   initialize_system_info();
   static void   setmode_streams();
 
@@ -77,8 +78,6 @@ class win32 {
   enum Ept { EPT_THREAD, EPT_PROCESS, EPT_PROCESS_DIE };
   // Wrapper around _endthreadex(), exit() and _exit()
   static int exit_process_or_thread(Ept what, int exit_code);
-
-  static void initialize_performance_counter();
 
  public:
   // Generic interface:
