@@ -44,6 +44,7 @@
 #include "gc/g1/g1MonitoringSupport.hpp"
 #include "gc/g1/g1NUMA.hpp"
 #include "gc/g1/g1RedirtyCardsQueue.hpp"
+#include "gc/g1/g1UncommitRegionTask.hpp"
 #include "gc/g1/g1SurvivorRegions.hpp"
 #include "gc/g1/heapRegionManager.hpp"
 #include "gc/g1/heapRegionSet.hpp"
@@ -285,6 +286,10 @@ private:
   bool try_collect_concurrently(GCCause::Cause cause,
                                 uint gc_counter,
                                 uint old_marking_started_before);
+
+  virtual void finish_collection() {
+    G1UncommitRegionTask::finish_collection();
+  }
 
   // indicates whether we are in young or mixed GC mode
   G1CollectorState _collector_state;
