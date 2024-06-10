@@ -48,7 +48,11 @@ int main(int argc, char *argv[]) {
     if (!strcmp(action, "checkpoint")) {
         const char* argsidstr = getenv("SIM_CRAC_NEW_ARGS_ID");
         int argsid = argsidstr ? atoi(argsidstr) : 0;
+#ifdef LINUX
         pid_t jvm = getppid();
+#else
+        pid_t jvm = -1;
+#endif //LINUX
         kickjvm(jvm, argsid);
     } else if (!strcmp(action, "restore")) {
         char *strid = getenv("CRAC_NEW_ARGS_ID");
