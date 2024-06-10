@@ -34,7 +34,7 @@ public:
     return "perfdata";
   }
 
-  static bool checkpoint(const char* checkpoint_path);
+  static bool checkpoint();
   static bool checkpoint_fail();
   static bool restore();
 };
