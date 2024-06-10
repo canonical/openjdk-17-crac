@@ -58,10 +58,11 @@ class LogFileStreamOutput : public LogOutput {
   bool flush();
 
  public:
-  virtual int write(const LogDecorations& decorations, const char* msg);
-  virtual int write(LogMessageBuffer::Iterator msg_iterator);
+  virtual int write(const LogDecorations& decorations, const char* msg) override;
+  virtual int write(LogMessageBuffer::Iterator msg_iterator) override;
   // Write API used by AsyncLogWriter
   virtual int write_blocking(const LogDecorations& decorations, const char* msg);
+  virtual int fd_get() const override { return fileno(_stream); }
 };
 
 class LogStdoutOutput : public LogFileStreamOutput {
