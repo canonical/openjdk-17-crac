@@ -60,6 +60,7 @@ protected:
 public:
   // Initialization
   static void initialize();
+  static void crac_restore() {}
   static void check_virtualizations();
 
   static void print_platform_virtualization_info(outputStream*);
@@ -165,6 +166,9 @@ public:
   // Is the CPU running emulated (for example macOS Rosetta running x86_64 code on M1 ARM (aarch64)
   static bool is_cpu_emulated();
 #endif
+
+  // No _features_names[] available on this CPU.
+  static void insert_features_names(char* buf, size_t buflen, uint64_t features = _features) {}
 };
 
 #endif // CPU_AARCH64_VM_VERSION_AARCH64_HPP

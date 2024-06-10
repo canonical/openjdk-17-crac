@@ -59,6 +59,7 @@ class Linux {
   static julong available_memory();
   static int active_processor_count();
 
+  static void initialize_processor_count();
   static void initialize_system_info();
 
   static int commit_memory_impl(char* addr, size_t bytes, bool exec);
@@ -197,6 +198,8 @@ class Linux {
   // May fail (returns false) or succeed (returns true) but not all output fields are available; unavailable
   // fields will contain -1.
   static bool query_process_memory_info(meminfo_t* info);
+
+  static int checkpoint_restore(int *shmid);
 
   // Stack repair handling
 
