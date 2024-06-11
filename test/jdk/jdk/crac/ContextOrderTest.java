@@ -252,7 +252,6 @@ public class ContextOrderTest {
 
     private static class MockResource implements JDKResource {
         protected final List<String> recorder;
-        protected final Priority priority;
         protected final String id;
 
         private MockResource(List<String> recorder, String id) {
@@ -289,7 +288,6 @@ public class ContextOrderTest {
         private CreatingResource(List<String> recorder, String id, Context<R> childContext) {
             super(recorder, id);
             this.childContext = childContext;
-            this.childPriority = childPriority;
         }
 
         @Override
