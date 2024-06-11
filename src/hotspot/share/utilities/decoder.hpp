@@ -115,6 +115,9 @@ public:
 
   static void print_state_on(outputStream* st);
 
+#ifdef _WINDOWS
+  static void before_checkpoint() { /* noop */ }
+#else
   static void before_checkpoint();
 
 protected:
@@ -135,7 +138,8 @@ private:
 protected:
   static Mutex* shared_decoder_lock();
 
-  friend class DecoderLocker;
+#endif // !_WINDOWS
+
 };
 
 #endif // SHARE_UTILITIES_DECODER_HPP
