@@ -18,63 +18,72 @@
 // CA 94089 USA or visit www.azul.com if you need additional information or
 // have any questions.
 
-import java.nio.channels.*;
+import jdk.crac.Context;
+import jdk.crac.Core;
+import jdk.crac.Resource;
+
 import java.io.IOException;
-import jdk.crac.*;
-import jdk.test.lib.crac.CracBuilder;
-import jdk.test.lib.crac.CracTest;
-import jdk.test.lib.crac.CracTestArg;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 
-/*
- * @test Selector/Test970
- * @summary a regression test for ZE-970 ("a channel deregistration
- *          is locked depending on mutual order of selector and channel creation")
- * @library /test/lib
- * @build ChannelResource
- * @build Test
- * @run driver jdk.test.lib.crac.CracTest SELECT_NOW true
- * @run driver jdk.test.lib.crac.CracTest SELECT_NOW false
- * @run driver jdk.test.lib.crac.CracTest SELECT true
- * @run driver jdk.test.lib.crac.CracTest SELECT false
- * @run driver jdk.test.lib.crac.CracTest SELECT_TIMEOUT true
- * @run driver jdk.test.lib.crac.CracTest SELECT_TIMEOUT false
- */
-public class Test implements CracTest {
-    @CracTestArg(0)
-    ChannelResource.SelectionType selType;
+class ChannelResource implements Resource {
 
-    @CracTestArg(1)
-    boolean openSelectorAtFirst;
+    public enum SelectionType {
+        SELECT,
+        SELECT_TIMEOUT,
+        SELECT_NOW
+    };
 
-    @Override
-    public void test() throws Exception {
-        new CracBuilder().doCheckpointAndRestore();
+    private SocketChannel channel;
+    private SelectionKey key;
+    private Selector selector;
+
+    private final SelectionType selType;
+
+    public ChannelResource(SelectionType selType) {
+        this.selType = selType;
+        Core.getGlobalContext().register(this);
+    }
+
+    public void open() throws IOException {
+        channel = SocketChannel.open();
+        channel.configureBlocking(false);
+    }
+
+    public void register(Selector selector) throws IOException {
+        key = channel.register(selector, SelectionKey.OP_READ);
+        this.selector = selector;
     }
 
     @Override
-    public void exec() throws Exception {
+    public void beforeCheckpoint(Context<? extends Resource> context) throws IOException {
 
-        if (openSelectorAtFirst) {
+        channel.socket().close();
 
-            Selector selector = Selector.open();
-            ChannelResource ch = new ChannelResource(selType);
-            ch.open();
-            ch.register(selector);
+        // causes the channel deregistration
+        if (selType == SelectionType.SELECT_NOW) {
+            selector.selectNow();
+        } else if (selType == SelectionType.SELECT_TIMEOUT) {
+            selector.select(500);
+        } else {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(1000);
+                        selector.wakeup();
+                    } catch (InterruptedException ie) {
+                        throw new RuntimeException(ie);
+                    }
+                }
+            }).start();
 
-            Core.checkpointRestore();
-
-            selector.close();
-
-        } else { // try in other order (see ZE-970)
-
-            ChannelResource ch = new ChannelResource(selType);
-            ch.open();
-            Selector selector = Selector.open();
-            ch.register(selector);
-
-            Core.checkpointRestore();
-
-            selector.close();
+            selector.select();
         }
+    }
+
+    @Override
+    public void afterRestore(Context<? extends Resource> context) {
     }
 }

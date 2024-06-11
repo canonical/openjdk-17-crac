@@ -53,12 +53,6 @@ public class InterlockTest implements Resource, CracTest {
     int numThreads;
 
     private class TestThread1 extends Thread {
-        private long timeout;
-
-        TestThread1(long timeout) {
-            this.timeout = timeout;
-        }
-
         @Override
         public void run() {
             while (!stop) {
@@ -78,7 +72,6 @@ public class InterlockTest implements Resource, CracTest {
         }
 
         TestThread2() throws Exception {
-            this.timeout = timeout;
             sr = SecureRandom.getInstance(algName);
             Core.getGlobalContext().register(this);
         }

@@ -34,6 +34,7 @@ import java.io.RandomAccessFile;
 /**
  * @test
  * @library /test/lib
+ * @compile ../../../../lib/jdk/test/lib/crac/CracBuilder.java
  * @build OpenFileDetectionTest
  * @run driver jdk.test.lib.crac.CracTest
  */

@@ -302,7 +302,7 @@ public class CracBuilder {
             if (dockerImageBaseVersion != null) {
                 System.setProperty(DockerfileConfig.BASE_IMAGE_VERSION, dockerImageBaseVersion);
             }
-            DockerTestUtils.buildJdkDockerImage(dockerImageName, "Dockerfile-is-ignored", "jdk-docker");
+            DockerTestUtils.buildJdkContainerImage(dockerImageName);
         } finally {
             if (previousBaseImageName != null) {
                 System.setProperty(DockerfileConfig.BASE_IMAGE_NAME, previousBaseImageName);

@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 /**
  * @test
  * @library /test/lib
+ * @compile ../../../../lib/jdk/test/lib/crac/CracBuilder.java
  * @build IgnoredFileDescriptorsTest
  * @run driver jdk.test.lib.crac.CracTest
  * @requires (os.family == "linux")

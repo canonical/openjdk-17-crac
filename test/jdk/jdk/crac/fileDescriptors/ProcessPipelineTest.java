@@ -38,6 +38,7 @@ import static jdk.test.lib.Asserts.*;
  * @test
  * @library /test/lib
  * @modules java.base/jdk.internal.crac:+open
+ * @compile ../../../../lib/jdk/test/lib/crac/CracBuilder.java
  * @requires (os.family == "linux")
  * @build ProcessPipelineTest
  * @run driver jdk.test.lib.crac.CracTest

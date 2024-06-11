@@ -39,6 +39,7 @@ import static jdk.test.lib.Asserts.fail;
 /**
  * @test
  * @library /test/lib
+ * @compile ../../../../lib/jdk/test/lib/crac/CracBuilder.java
  * @modules java.base/jdk.internal.crac:+open
  * @requires (os.family == "linux")
  * @build FDPolicyTestBase

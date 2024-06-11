@@ -40,6 +40,7 @@ import jdk.test.lib.crac.CracTestArg;
  * @run driver jdk.test.lib.crac.CracTest SELECT_TIMEOUT true
  * @run driver jdk.test.lib.crac.CracTest SELECT_TIMEOUT false
  */
+
 public class Test implements CracTest {
     @CracTestArg(0)
     ChannelResource.SelectionType selType;
