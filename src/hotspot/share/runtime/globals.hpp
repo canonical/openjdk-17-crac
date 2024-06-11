@@ -2121,16 +2121,18 @@ const intx ObjectAlignmentInBytes = 8;
       "This option applies only to files opened by native code; for files " \
       "opened by Java code use -Djdk.crac.resource-policies=...")           \
                                                                             \
-  product(bool, CRAllowToSkipCheckpoint, false,                             \
+  product(bool, CRAllowToSkipCheckpoint, false, DIAGNOSTIC,                 \
       "Allow implementation to not call Checkpoint if helper not found")    \
                                                                             \
-  product(bool, CRHeapDumpOnCheckpointException, false, "Dump heap on "     \
-      "CheckpointException thrown because of C/RaC precondition failed")    \
+  product(bool, CRHeapDumpOnCheckpointException, false, DIAGNOSTIC,         \
+      "Dump heap on CheckpointException thrown because of C/RaC "          \
+       "precondition failed")                                               \
                                                                             \
-  product(bool, CRPrintResourcesOnCheckpoint, false, "Print resources "     \
-      "to decide CheckpointException")                                      \
+  product(bool, CRPrintResourcesOnCheckpoint, false, DIAGNOSTIC,            \
+      "Print resources to decide CheckpointException")                      \
                                                                             \
-  product(bool, CRTraceStartupTime, true, "Trace startup time")             \
+  product(bool, CRTraceStartupTime, false, DIAGNOSTIC,                      \
+      "Trace startup time")                                                 \
                                                                             \
   product(bool, CRDoThrowCheckpointException, true, "Throw "                \
       "CheckpointException if uncheckpointable resource handle found")      \
