@@ -5564,3 +5564,7 @@ bool os::trim_native_heap(os::size_change_t* rss_change) {
   return false; // musl
 #endif
 }
+
+void os::Linux::initialize_time_counters(void) {
+  initial_time_count = javaTimeNanos();
+}

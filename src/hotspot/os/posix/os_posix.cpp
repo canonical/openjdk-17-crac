@@ -80,8 +80,6 @@
   #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-static jlong initial_time_count = 0;
-
 #define check_with_errno(check_type, cond, msg)                             \
   do {                                                                      \
     int err = errno;                                                        \
@@ -1356,11 +1354,7 @@ void os::Posix::init(void) {
       _use_clock_monotonic_condattr = true;
     }
   }
-  initialize_time_counters();
-}
-
-void os::Posix::initialize_time_counters(void) {
-  initial_time_count = javaTimeNanos();
+  os::Linux::initialize_time_counters();
 }
 
 void os::Posix::init_2(void) {

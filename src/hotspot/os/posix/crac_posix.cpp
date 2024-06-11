@@ -42,7 +42,7 @@ void CracSHM::unlink() {
 }
 
 void crac::initialize_time_counters() {
-  os::Posix::initialize_time_counters();
+  os::Linux::initialize_time_counters();
 }
 
 #ifndef LINUX
