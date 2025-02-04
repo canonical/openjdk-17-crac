@@ -1,4 +1,6 @@
-# CRaC JDK
+# CRaC JDK 17 - Security Updates
+
+This repository contains OpenJDK 17 security updates published at https://github.com/openjdk/jdk17u.
 
 ## Build
 
@@ -20,8 +22,6 @@ Grant permissions to allow regular user to run it
 sudo chown root:root jdk/lib/criu
 sudo chmod u+s jdk/lib/criu
 ```
-
-# JDK
 
 For build instructions please see the
 [online documentation](https://openjdk.org/groups/build/doc/building.html),
