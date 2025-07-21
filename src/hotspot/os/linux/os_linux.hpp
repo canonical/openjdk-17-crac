@@ -32,9 +32,7 @@
 static bool zero_page_read_protected() { return true; }
 
 class Linux {
-  friend class CgroupSubsystem;
   friend class os;
-  friend class OSContainer;
   friend class TestReserveMemorySpecial;
 
   static int (*_pthread_getcpuclockid)(pthread_t, clockid_t *);
@@ -58,7 +56,6 @@ class Linux {
   static int _page_size;
 
   static julong available_memory();
-  static int active_processor_count();
 
   static void initialize_processor_count();
   static void initialize_system_info();
@@ -110,6 +107,7 @@ class Linux {
   };
 
   static void initialize_time_counters(void);
+  static int active_processor_count();
   // which_logical_cpu=-1 returns accumulated ticks for all cpus.
   static bool get_tick_information(CPUPerfTicks* pticks, int which_logical_cpu);
   static bool _stack_is_executable;
