@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import jdk.internal.crac.Core;
 import jdk.internal.crac.JDKResource;
 
 class FileDispatcherImpl extends FileDispatcher {
+    private static final boolean SUPPORTS_PENDING_SIGNALS = NativeThread.supportPendingSignals();
 
     static class ResourceProxy implements JDKResource {
         @Override
@@ -131,30 +132,35 @@ class FileDispatcherImpl extends FileDispatcher {
         fdAccess.close(fd);
     }
 
-    void preClose(FileDescriptor fd) throws IOException {
-        boolean doPreclose = true;
-        synchronized (closeLock) {
-            if (forceNonDeferedClose) {
-                doPreclose = false;
-            }
-            if (doPreclose) {
-                ++closeCnt;
-            }
-        }
+    final void preClose(FileDescriptor fd, long reader, long writer) throws IOException {
+        preCloseImpl(fd, reader, writer);
+    }
 
-        if (!doPreclose) {
-            return;
+    /**
+     * Prepare the given file descriptor for closing. On Unix systems,
+     * if a platform thread is blocked on the file descriptor then the file descriptor is
+     * dup'ed to a special fd and the thread signalled so that the syscall fails with EINTR.
+     */
+    static final void preCloseImpl(FileDescriptor fd, long reader, long writer) throws IOException {
+        if (reader != 0 || writer != 0) {
+            implPreClose(fd, reader, writer);
         }
+    }
 
-        try {
-            preClose0(fd);
-        } finally {
-            synchronized (closeLock) {
-                closeCnt--;
-                if (forceNonDeferedClose && closeCnt == 0) {
-                    closeLock.notifyAll();
-                }
-            }
+    private static void signalThreads(long reader, long writer) {
+        if (reader != 0)
+            NativeThread.signal(reader);
+        if (writer != 0)
+            NativeThread.signal(writer);
+    }
+
+    private static void implPreClose(FileDescriptor fd, long reader, long writer) throws IOException {
+        if (SUPPORTS_PENDING_SIGNALS) {
+            signalThreads(reader, writer);
+        }
+        preClose0(fd);
+        if (!SUPPORTS_PENDING_SIGNALS) {
+            signalThreads(reader, writer);
         }
     }
 
@@ -256,7 +262,7 @@ class FileDispatcherImpl extends FileDispatcher {
 
     private static native void close0(FileDescriptor fd) throws IOException;
 
-    static native void preClose0(FileDescriptor fd) throws IOException;
+    private static native void preClose0(FileDescriptor fd) throws IOException;
 
     static native void dup0(FileDescriptor fd1, FileDescriptor fd2) throws IOException;
 
