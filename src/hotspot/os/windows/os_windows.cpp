@@ -815,6 +815,7 @@ void os::free_thread(OSThread* osthread) {
 static jlong first_filetime;
 static jlong initial_performance_count;
 static jlong performance_frequency;
+static jlong restore_performance_count;
 
 
 jlong as_long(LARGE_INTEGER x) {
@@ -831,6 +832,11 @@ jlong os::elapsed_counter() {
   return as_long(count) - initial_performance_count;
 }
 
+jlong os::elapsed_counter_since_restore() {
+  LARGE_INTEGER count;
+  QueryPerformanceCounter(&count);
+  return as_long(count) - restore_performance_count;
+}
 
 jlong os::elapsed_frequency() {
   return performance_frequency;
@@ -996,6 +1002,17 @@ void os::win32::initialize_performance_counter() {
   performance_frequency = as_long(count);
   QueryPerformanceCounter(&count);
   initial_performance_count = as_long(count);
+  restore_performance_count = initial_performance_count;
+}
+
+void os::win32::reset_performance_counters() {
+  LARGE_INTEGER count;
+  QueryPerformanceFrequency(&count);
+  // Until we perform a real C/R on Windows this is safe, performance frequency
+  // should be the same. With real C/R the counters will be probably incomparable.
+  assert(performance_frequency == as_long(count), "Performance frequency changed");
+  QueryPerformanceCounter(&count);
+  restore_performance_count = as_long(count);
 }
 
 

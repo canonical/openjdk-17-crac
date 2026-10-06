@@ -770,6 +770,11 @@ jlong os::elapsed_counter() {
   return javaTimeNanos() - initial_time_count;
 }
 
+jlong os::elapsed_counter_since_restore() {
+  // No checkpoint/restore support on this platform
+  return os::elapsed_counter();
+}
+
 jlong os::elapsed_frequency() {
   return NANOSECS_PER_SEC; // nanosecond resolution
 }
