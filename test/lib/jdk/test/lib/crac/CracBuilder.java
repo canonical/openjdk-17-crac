@@ -275,7 +275,8 @@ public class CracBuilder {
         }
         ensureContainerKilled();
         buildDockerImage();
-        FileUtils.deleteFileTreeWithRetry(Path.of(".", "jdk-docker"));
+        // DockerTestUtils.buildJdkContainerImage() creates the build context in a dir named after the image
+        FileUtils.deleteFileTreeWithRetry(Path.of(".", dockerImageName.replace(":", "-")));
         // Make sure we start with a clean image directory
         DockerTestUtils.execute(Container.ENGINE_COMMAND, "volume", "rm", "cr");
     }
