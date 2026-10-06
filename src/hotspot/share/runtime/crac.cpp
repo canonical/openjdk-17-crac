@@ -510,6 +510,17 @@ Handle crac::checkpoint(jarray fd_arr, jobjectArray obj_arr, bool dry_run, jlong
 }
 
 void crac::restore() {
+  struct stat statbuf;
+  if (os::stat(CRaCRestoreFrom, &statbuf) != 0) {
+    fprintf(stderr, "Cannot open restore directory of the -XX:CRaCRestoreFrom parameter: ");
+    perror(CRaCRestoreFrom);
+    return;
+  }
+  if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
+    fprintf(stderr, "-XX:CRaCRestoreFrom parameter is not a directory: %s\n", CRaCRestoreFrom);
+    return;
+  }
+
   jlong restore_time = os::javaTimeMillis();
   jlong restore_nanos = os::javaTimeNanos();
 
