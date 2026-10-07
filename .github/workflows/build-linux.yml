@@ -84,8 +84,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install gcc g++ libx11-dev libxext-dev libxrender-dev libxrandr-dev libxtst-dev libxt-dev libcups2-dev libasound2-dev libfreetype-dev libfontconfig-dev libpng-dev libjpeg-dev libgif-dev liblcms2-dev libharfbuzz-dev systemtap-sdt-dev crac-criu
-          # CRIU needs root privileges for checkpoint/restore (see docs.azul.com/crac/usage/debugging)
+          # CRIU needs root privileges for checkpoint/restore (see docs.azul.com/crac/usage/debugging);
+          # the VM looks for /usr/sbin/criu, shadow the image's preinstalled one
           sudo chmod u+s /usr/sbin/crac-criu
+          sudo ln -sf /usr/sbin/crac-criu /usr/sbin/criu
 
       - name: 'Configure'
         run: >
@@ -125,8 +127,6 @@ jobs:
           debug-suffix: '${{ matrix.suffix }}'
 
       - name: 'Run CRaC tests'
-        env:
-          CRAC_CRIU_PATH: /usr/sbin/crac-criu
         run: >
           make test TEST='jdk/crac'
           JTREG='JAVA_OPTIONS=-XX:-CreateCoredumpOnCrash;VERBOSE=fail,error,time;KEYWORDS=!headful'
