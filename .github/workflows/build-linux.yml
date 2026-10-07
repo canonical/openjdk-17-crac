@@ -83,7 +83,7 @@ jobs:
       - name: 'Install toolchain and dependencies'
         run: |
           sudo apt-get update
-          sudo apt-get install gcc g++ libxrandr-dev libxtst-dev libcups2-dev libasound2-dev crac-criu
+          sudo apt-get install gcc g++ libx11-dev libxext-dev libxrender-dev libxrandr-dev libxtst-dev libxt-dev libcups2-dev libasound2-dev libfreetype-dev libfontconfig-dev crac-criu
 
       - name: 'Configure'
         run: >
