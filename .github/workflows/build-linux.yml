@@ -84,6 +84,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install gcc g++ libx11-dev libxext-dev libxrender-dev libxrandr-dev libxtst-dev libxt-dev libcups2-dev libasound2-dev libfreetype-dev libfontconfig-dev libpng-dev libjpeg-dev libgif-dev liblcms2-dev libharfbuzz-dev systemtap-sdt-dev crac-criu
+          # CRIU needs root privileges for checkpoint/restore (see docs.azul.com/crac/usage/debugging)
+          sudo chmod u+s /usr/sbin/crac-criu
 
       - name: 'Configure'
         run: >
