@@ -83,7 +83,7 @@ jobs:
       - name: 'Install toolchain and dependencies'
         run: |
           sudo apt-get update
-          sudo apt-get install gcc g++ libx11-dev libxext-dev libxrender-dev libxrandr-dev libxtst-dev libxt-dev libcups2-dev libasound2-dev libfreetype-dev libfontconfig-dev crac-criu
+          sudo apt-get install gcc g++ libx11-dev libxext-dev libxrender-dev libxrandr-dev libxtst-dev libxt-dev libcups2-dev libasound2-dev libfreetype-dev libfontconfig-dev libpng-dev libjpeg-dev libgif-dev liblcms2-dev libpcsclite-dev libharfbuzz-dev systemtap-sdt-dev crac-criu
 
       - name: 'Configure'
         run: >
@@ -96,7 +96,14 @@ jobs:
           --with-gtest=${{ steps.gtest.outputs.path }}
           --enable-jtreg-failure-handler
           --with-zlib=system
-          --with-extra-cflags=-Wno-error=discarded-qualifiers
+          --with-giflib=system
+          --with-libpng=system
+          --with-libjpeg=system
+          --with-lcms=system
+          --with-pcsclite=system
+          --with-harfbuzz=system
+          --enable-dtrace
+          --disable-warnings-as-errors
           ${{ inputs.extra-conf-options }} ${{ inputs.configure-arguments }} || (
           echo "Dumping config.log:" &&
           cat config.log &&
