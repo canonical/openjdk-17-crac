@@ -96,6 +96,7 @@ jobs:
           --with-gtest=${{ steps.gtest.outputs.path }}
           --enable-jtreg-failure-handler
           --with-zlib=system
+          --with-extra-cflags=-Wno-error=discarded-qualifiers
           ${{ inputs.extra-conf-options }} ${{ inputs.configure-arguments }} || (
           echo "Dumping config.log:" &&
           cat config.log &&
