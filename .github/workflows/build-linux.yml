@@ -42,19 +42,6 @@ on:
         required: false
         type: string
         default: '[ "debug", "release" ]'
-      gcc-major-version:
-        required: true
-        type: string
-      gcc-package-suffix:
-        required: false
-        type: string
-        default: ''
-      apt-architecture:
-        required: false
-        type: string
-      apt-extra-packages:
-        required: false
-        type: string
       configure-arguments:
         required: false
         type: string
@@ -65,7 +52,7 @@ on:
 jobs:
   build-linux:
     name: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
 
     strategy:
       fail-fast: false
@@ -94,25 +81,10 @@ jobs:
         id: gtest
         uses: ./.github/actions/get-gtest
 
-      - name: 'Set architecture'
-        id: arch
-        run: |
-          # Set a proper suffix for packages if using a different architecture
-          if [[ '${{ inputs.apt-architecture }}' != '' ]]; then
-            echo 'suffix=:${{ inputs.apt-architecture }}' >> $GITHUB_OUTPUT
-          fi
-
-      # Upgrading apt to solve libc6 installation bugs, see JDK-8260460.
       - name: 'Install toolchain and dependencies'
         run: |
-          # Install dependencies using apt-get
-          if [[ '${{ inputs.apt-architecture }}' != '' ]]; then
-            sudo dpkg --add-architecture ${{ inputs.apt-architecture }}
-          fi
           sudo apt-get update
-          sudo apt-get install --only-upgrade apt
-          sudo apt-get install gcc-${{ inputs.gcc-major-version }}${{ inputs.gcc-package-suffix }} g++-${{ inputs.gcc-major-version }}${{ inputs.gcc-package-suffix }} libxrandr-dev${{ steps.arch.outputs.suffix }} libxtst-dev${{ steps.arch.outputs.suffix }} libcups2-dev${{ steps.arch.outputs.suffix }} libasound2-dev${{ steps.arch.outputs.suffix }} ${{ inputs.apt-extra-packages }}
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ inputs.gcc-major-version }} 100 --slave /usr/bin/g++ g++ /usr/bin/g++-${{ inputs.gcc-major-version }}
+          sudo apt-get install gcc g++ libxrandr-dev libxtst-dev libcups2-dev libasound2-dev crac-criu
 
       - name: 'Configure'
         run: >
@@ -143,3 +115,10 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
           debug-suffix: '${{ matrix.suffix }}'
+
+      - name: 'Run CRaC tests'
+        env:
+          CRAC_CRIU_PATH: /usr/sbin/crac-criu
+        run: >
+          make test TEST='jdk/crac'
+          JTREG='JAVA_OPTIONS=-XX:-CreateCoredumpOnCrash;VERBOSE=fail,error,time;KEYWORDS=!headful'
