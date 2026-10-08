@@ -129,4 +129,5 @@ jobs:
       - name: 'Run CRaC tests'
         run: >
           make test TEST='jdk/crac'
+          EXTRA_PROBLEM_LISTS=$GITHUB_WORKSPACE/.github/crac-ProblemList.txt
           JTREG='JAVA_OPTIONS=-XX:-CreateCoredumpOnCrash;VERBOSE=fail,error,time;KEYWORDS=!headful'

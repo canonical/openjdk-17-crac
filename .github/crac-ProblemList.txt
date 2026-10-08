@@ -1,0 +1,5 @@
+# Docker/container tests are skipped in CI: no usable docker daemon on the runner
+jdk/crac/ContainerPidAdjustmentTest.java linux-all
+jdk/crac/java/lang/System/NanoTimeTest.java linux-all
+jdk/crac/java/lang/System/TimedWaitingTest.java linux-all
+jdk/crac/java/net/InetAddress/ResolveTest.java linux-all
