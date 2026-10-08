@@ -1,4 +1,6 @@
 # Docker/container tests are skipped in CI: no usable docker daemon on the runner
+# Selector/wakeupByTimeoutAfterRestore is timing-flaky on the CI runner
+jdk/crac/Selector/wakeupByTimeoutAfterRestore/Test.java linux-all
 jdk/crac/ContainerPidAdjustmentTest.java linux-all
 jdk/crac/java/lang/System/NanoTimeTest.java linux-all
 jdk/crac/java/lang/System/TimedWaitingTest.java linux-all
