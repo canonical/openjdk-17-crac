@@ -179,6 +179,7 @@ os::Linux::mallinfo2_func_t os::Linux::_mallinfo2 = NULL;
 #endif // __GLIBC__
 
 static jlong initial_time_count=0;
+static jlong restore_time_count=0;
 
 static int clock_tics_per_sec = 100;
 
@@ -1353,6 +1354,10 @@ double os::elapsedTime() {
 
 jlong os::elapsed_counter() {
   return javaTimeNanos() - initial_time_count;
+}
+
+jlong os::elapsed_counter_since_restore() {
+  return javaTimeNanos() - restore_time_count;
 }
 
 jlong os::elapsed_frequency() {
@@ -4518,6 +4523,7 @@ void os::init(void) {
   os::Posix::init();
 
   initial_time_count = javaTimeNanos();
+  restore_time_count = initial_time_count;
 }
 
 // To install functions for atexit system call
@@ -5570,4 +5576,9 @@ bool os::trim_native_heap(os::size_change_t* rss_change) {
 
 void os::Linux::initialize_time_counters(void) {
   initial_time_count = javaTimeNanos();
+  restore_time_count = initial_time_count;
+}
+
+void os::Linux::reset_time_counters(void) {
+  restore_time_count = javaTimeNanos();
 }

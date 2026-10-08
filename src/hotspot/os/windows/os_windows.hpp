@@ -60,6 +60,7 @@ class win32 {
  public:
   // Windows-specific interface:
   static void   initialize_performance_counter();
+  static void   reset_performance_counters();
   static void   initialize_system_info();
   static void   setmode_streams();
 

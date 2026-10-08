@@ -134,6 +134,11 @@ public class CracProcess {
         return process.pid();
     }
 
+    public void destroyForcibly() {
+        process.descendants().forEach(ProcessHandle::destroyForcibly);
+        process.destroyForcibly();
+    }
+
     public OutputStream input() {
         return process.getOutputStream();
     }

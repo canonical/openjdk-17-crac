@@ -107,6 +107,7 @@ class Linux {
   };
 
   static void initialize_time_counters(void);
+  static void reset_time_counters(void);
   static int active_processor_count();
   // which_logical_cpu=-1 returns accumulated ticks for all cpus.
   static bool get_tick_information(CPUPerfTicks* pticks, int which_logical_cpu);

@@ -39,6 +39,7 @@
 #include "services/writeableFlags.hpp"
 #include "utilities/decoder.hpp"
 #include "os.inline.hpp"
+#include "utilities/defaultStream.hpp"
 
 static const char* _crengine = NULL;
 static char* _crengine_arg_str = NULL;
@@ -47,13 +48,14 @@ static const char* _crengine_args[32];
 static jlong _restore_start_time;
 static jlong _restore_start_nanos;
 
-// Timestamps recorded before checkpoint
-jlong crac::checkpoint_millis;
-jlong crac::checkpoint_nanos;
-char crac::checkpoint_bootid[UUID_LENGTH];
+// Timestamps recorded before checkpoint.
+char crac::_checkpoint_bootid[UUID_LENGTH];
+jlong crac::_checkpoint_wallclock_seconds; // Wall-clock time, full seconds
+jlong crac::_checkpoint_wallclock_nanos;   // Wall-clock time, nanoseconds remainder [0, 999999999]
+jlong crac::_checkpoint_monotonic_nanos;   // Monotonic time, nanoseconds
 // Value based on wall clock time difference that will guarantee monotonic
 // System.nanoTime() close to actual wall-clock time difference.
-jlong crac::javaTimeNanos_offset = 0;
+jlong crac::_javaTimeNanos_offset = 0;
 
 jlong crac::restore_start_time() {
   if (!_restore_start_time) {
@@ -304,9 +306,22 @@ static void wakeup_threads_in_timedwait() {
   WatcherThread::watcher_thread()->unpark();
 }
 
+class DefaultStreamHandler {
+public:
+  DefaultStreamHandler() {
+    defaultStream::instance->before_checkpoint();
+  }
+
+  ~DefaultStreamHandler() {
+    defaultStream::instance->after_restore();
+  }
+};
+
+
 void VM_Crac::doit() {
   // dry-run fails checkpoint
   bool ok = true;
+  DefaultStreamHandler defStreamHandler;
 
   Decoder::before_checkpoint();
   if (!check_fds()) {
@@ -347,7 +362,7 @@ void VM_Crac::doit() {
 
   // It needs to check CPU features before any other code (such as VM_Crac::read_shm) depends on them.
   VM_Version::crac_restore();
-
+  Arguments::reset_for_crac_restore();
   if (shmid <= 0 || !VM_Crac::read_shm(shmid)) {
     _restore_start_time = os::javaTimeMillis();
     _restore_start_nanos = os::javaTimeNanos();
@@ -356,7 +371,7 @@ void VM_Crac::doit() {
   }
 
   if (CRaCResetStartTime) {
-    crac::initialize_time_counters();
+    crac::reset_time_counters();
   }
 
   // VM_Crac::read_shm needs to be already called to read RESTORE_SETTABLE parameters.
@@ -368,6 +383,7 @@ void VM_Crac::doit() {
 
   _ok = true;
 }
+
 
 bool crac::prepare_checkpoint() {
   struct stat st;
@@ -456,10 +472,13 @@ Handle crac::checkpoint(jarray fd_arr, jobjectArray obj_arr, bool dry_run, jlong
   }
 
   if (cr.ok()) {
-    oop new_args = NULL;
+    // Using handle rather than oop; dangling oop would fail with -XX:+CheckUnhandledOops
+    Handle new_args;
     if (cr.new_args()) {
-      new_args = java_lang_String::create_oop_from_str(cr.new_args(), CHECK_NH);
+      oop args_oop = java_lang_String::create_oop_from_str(cr.new_args(), CHECK_NH);
+      new_args = Handle(THREAD, args_oop);
     }
+
     GrowableArray<const char *>* new_properties = cr.new_properties();
     objArrayOop propsObj = oopFactory::new_objArray(vmClasses::String_klass(), new_properties->length(), CHECK_NH);
     objArrayHandle props(THREAD, propsObj);
@@ -471,7 +490,7 @@ Handle crac::checkpoint(jarray fd_arr, jobjectArray obj_arr, bool dry_run, jlong
 
     wakeup_threads_in_timedwait();
 
-    return ret_cr(JVM_CHECKPOINT_OK, Handle(THREAD, new_args), props, Handle(), Handle(), THREAD);
+    return ret_cr(JVM_CHECKPOINT_OK, new_args, props, Handle(), Handle(), THREAD);
   }
 
   GrowableArray<CracFailDep>* failures = cr.failures();
@@ -492,6 +511,17 @@ Handle crac::checkpoint(jarray fd_arr, jobjectArray obj_arr, bool dry_run, jlong
 }
 
 void crac::restore() {
+  struct stat statbuf;
+  if (os::stat(CRaCRestoreFrom, &statbuf) != 0) {
+    fprintf(stderr, "Cannot open restore directory of the -XX:CRaCRestoreFrom parameter: ");
+    perror(CRaCRestoreFrom);
+    return;
+  }
+  if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
+    fprintf(stderr, "-XX:CRaCRestoreFrom parameter is not a directory: %s\n", CRaCRestoreFrom);
+    return;
+  }
+
   jlong restore_time = os::javaTimeMillis();
   jlong restore_nanos = os::javaTimeNanos();
 
@@ -596,10 +626,10 @@ bool CracRestoreParameters::read_from(int fd) {
 }
 
 void crac::record_time_before_checkpoint() {
-  checkpoint_millis = os::javaTimeMillis();
-  checkpoint_nanos = os::javaTimeNanos();
-  memset(checkpoint_bootid, 0, UUID_LENGTH);
-  read_bootid(checkpoint_bootid);
+  os::javaTimeSystemUTC(_checkpoint_wallclock_seconds, _checkpoint_wallclock_nanos);
+  _checkpoint_monotonic_nanos = os::javaTimeNanos();
+  memset(_checkpoint_bootid, 0, UUID_LENGTH);
+  read_bootid(_checkpoint_bootid);
 }
 
 void crac::update_javaTimeNanos_offset() {
@@ -611,22 +641,28 @@ void crac::update_javaTimeNanos_offset() {
   // only guarantee that the nanotime does not go backwards in that case but
   // won't offset the time based on wall-clock time as this change in monotonic
   // time is likely intentional.
-  if (!read_bootid(buf) || memcmp(buf, checkpoint_bootid, UUID_LENGTH) != 0) {
-    assert(checkpoint_millis >= 0, "Restore without a checkpoint?");
-    long diff_millis = os::javaTimeMillis() - checkpoint_millis;
+  if (!read_bootid(buf) || memcmp(buf, _checkpoint_bootid, UUID_LENGTH) != 0) {
+    jlong current_wallclock_seconds;
+    jlong current_wallclock_nanos;
+    os::javaTimeSystemUTC(current_wallclock_seconds, current_wallclock_nanos);
+
+    jlong diff_wallclock =
+      (current_wallclock_seconds - _checkpoint_wallclock_seconds) * NANOSECS_PER_SEC +
+      current_wallclock_nanos - _checkpoint_wallclock_nanos;
     // If the wall clock has gone backwards we won't add it to the offset
-    if (diff_millis < 0) {
-      diff_millis = 0;
+    if (diff_wallclock < 0) {
+      diff_wallclock = 0;
     }
+
     // javaTimeNanos() call on the second line below uses the *_offset, so we will zero
     // it to make the call return true monotonic time rather than the adjusted value.
-    javaTimeNanos_offset = 0;
-    javaTimeNanos_offset = checkpoint_nanos - os::javaTimeNanos() + diff_millis * 1000000L;
+    _javaTimeNanos_offset = 0;
+    _javaTimeNanos_offset = _checkpoint_monotonic_nanos - os::javaTimeNanos() + diff_wallclock;
   } else {
     // ensure monotonicity even if this looks like the same boot
-    jlong diff = os::javaTimeNanos() - checkpoint_nanos;
+    jlong diff = os::javaTimeNanos() - _checkpoint_monotonic_nanos;
     if (diff < 0) {
-      javaTimeNanos_offset -= diff;
+      _javaTimeNanos_offset -= diff;
     }
   }
 }
